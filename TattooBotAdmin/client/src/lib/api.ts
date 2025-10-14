@@ -42,34 +42,36 @@ async function request<T>(input: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+async function uploadFile(file: File, options?: { thumbnail?: File | null; fullResponse?: false }): Promise<string>;
+async function uploadFile(
+  file: File,
+  options: { thumbnail?: File | null; fullResponse: true }
+): Promise<UploadResponse>;
+async function uploadFile(
+  file: File,
+  options?: { thumbnail?: File | null; fullResponse?: boolean }
+): Promise<string | UploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (options?.thumbnail) {
+    formData.append("thumbnail", options.thumbnail);
+  }
+
+  const response = await fetch(`${BASE_URL}/upload`, { method: "POST", body: formData });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Ошибка загрузки файла");
+  }
+
+  const data = (await response.json()) as UploadResponse;
+  if (options?.fullResponse) {
+    return data;
+  }
+  return data.url;
+}
+
 export const api = {
-  async uploadFile(file: File, options?: { thumbnail?: File | null; fullResponse?: false }): Promise<string>;
-  async uploadFile(
-    file: File,
-    options: { thumbnail?: File | null; fullResponse: true }
-  ): Promise<UploadResponse>;
-  async uploadFile(
-    file: File,
-    options?: { thumbnail?: File | null; fullResponse?: boolean }
-  ): Promise<string | UploadResponse> {
-    const formData = new FormData();
-    formData.append("file", file);
-    if (options?.thumbnail) {
-      formData.append("thumbnail", options.thumbnail);
-    }
-
-    const response = await fetch(`${BASE_URL}/upload`, { method: "POST", body: formData });
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(text || "Ошибка загрузки файла");
-    }
-
-    const data = (await response.json()) as UploadResponse;
-    if (options?.fullResponse) {
-      return data;
-    }
-    return data.url;
-  },
+  uploadFile,
 
   // … оставшиеся методы без изменений …
 
