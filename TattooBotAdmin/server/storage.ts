@@ -289,35 +289,43 @@ export class DatabaseStorage {
     const masters = await this.database.select().from(mastersTable).limit(1);
     if (masters.length === 0) {
       const defaults = createDefaultMasters();
-      await this.database.insert(mastersTable).values(
-        defaults.map((m) => ({
-          id: m.id,
-          name: m.name,
-          nickname: m.nickname,
-          telegram: m.telegram ?? null,
-          specialization: m.specialization,
-          avatar: m.avatar ?? null,
-          isActive: m.isActive,
-        })),
-      );
+      if (defaults.length > 0) {
+        await this.database.insert(mastersTable).values(
+          defaults.map((m) => ({
+            id: m.id,
+            name: m.name,
+            nickname: m.nickname,
+            telegram: m.telegram ?? null,
+            specialization: m.specialization,
+            avatar: m.avatar ?? null,
+            isActive: m.isActive,
+          })),
+        );
+      }
     }
 
     const services = await this.database.select().from(servicesTable).limit(1);
     if (services.length === 0) {
       const defaults = createDefaultServices();
-      await this.database.insert(servicesTable).values(defaults);
+      if (defaults.length > 0) {
+        await this.database.insert(servicesTable).values(defaults);
+      }
     }
 
     const messages = await this.database.select().from(botMessagesTable).limit(1);
     if (messages.length === 0) {
       const defaults = createDefaultMessages();
-      await this.database.insert(botMessagesTable).values(defaults);
+      if (defaults.length > 0) {
+        await this.database.insert(botMessagesTable).values(defaults);
+      }
     }
 
     const portfolio = await this.database.select().from(portfolioTable).limit(1);
     if (portfolio.length === 0) {
       const defaults = createDefaultPortfolio();
-      await this.database.insert(portfolioTable).values(defaults);
+      if (defaults.length > 0) {
+        await this.database.insert(portfolioTable).values(defaults);
+      }
     }
 
     const settings = await this.database
