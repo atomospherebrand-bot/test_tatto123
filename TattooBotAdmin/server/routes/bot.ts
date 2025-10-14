@@ -10,7 +10,6 @@ import {
 import { getStorage } from "../storage";
 
 const router = Router();
-const storage = getStorage();
 
 const mastersQuerySchema = z.object({
   includeInactive: z
@@ -63,7 +62,7 @@ const sanitizeError = (error: unknown): { status: number; message: string } => {
 
 router.get("/services", async (_req, res, next) => {
   try {
-    const services = await storage.listServices();
+    const services = await getStorage().listServices();
     res.json({ services: services.map((service) => serviceSchema.parse(service)) });
   } catch (error) {
     next(error);
@@ -73,6 +72,7 @@ router.get("/services", async (_req, res, next) => {
 router.get("/masters", async (req, res, next) => {
   try {
     const { includeInactive } = mastersQuerySchema.parse(req.query);
+    const storage = getStorage();
     const masters = includeInactive ? await storage.listMasters() : await storage.listActiveMasters();
     res.json({ masters: masters.map((master) => masterSchema.parse(master)) });
   } catch (error) {
@@ -82,7 +82,7 @@ router.get("/masters", async (req, res, next) => {
 
 router.get("/messages", async (_req, res, next) => {
   try {
-    const messages = await storage.listMessages();
+    const messages = await getStorage().listMessages();
     res.json({ messages });
   } catch (error) {
     next(error);
@@ -91,7 +91,7 @@ router.get("/messages", async (_req, res, next) => {
 
 router.get("/settings", async (_req, res, next) => {
   try {
-    const settings = await storage.getSettings();
+    const settings = await getStorage().getSettings();
     const { botToken: _botToken, ...publicSettings } = settings;
     res.json({ settings: publicSettings });
   } catch (error) {
@@ -102,6 +102,7 @@ router.get("/settings", async (_req, res, next) => {
 router.get("/availability/calendar", async (req, res, next) => {
   try {
     const params = availabilityCalendarQuery.parse(req.query);
+    const storage = getStorage();
     const availability = await storage.getAvailabilityCalendar(
       params.serviceId,
       params.days,
@@ -120,7 +121,7 @@ router.get("/availability/calendar", async (req, res, next) => {
 router.get("/availability/masters", async (req, res, next) => {
   try {
     const params = availabilityMastersQuery.parse(req.query);
-    const masters = await storage.getMastersForSlot(params.serviceId, params.date, params.time);
+    const masters = await getStorage().getMastersForSlot(params.serviceId, params.date, params.time);
     res.json({ masters: masters.map((master) => botMasterSummarySchema.parse(master)) });
   } catch (error) {
     const { status, message } = sanitizeError(error);
@@ -134,7 +135,7 @@ router.get("/availability/masters", async (req, res, next) => {
 router.post("/bookings", async (req, res, next) => {
   try {
     const payload = botBookingRequestSchema.parse(req.body);
-    const booking = await storage.createBooking({
+    const booking = await getStorage().createBooking({
       clientName: payload.clientName,
       clientPhone: payload.clientPhone,
       clientTelegram: payload.clientTelegram,
@@ -158,7 +159,7 @@ router.post("/bookings", async (req, res, next) => {
 router.get("/portfolio", async (req, res, next) => {
   try {
     const params = portfolioQuerySchema.parse(req.query);
-    const result = await storage.listPortfolioByMaster(params.masterId, params.page, params.pageSize);
+    const result = await getStorage().listPortfolioByMaster(params.masterId, params.page, params.pageSize);
     res.json(result);
   } catch (error) {
     next(error);
