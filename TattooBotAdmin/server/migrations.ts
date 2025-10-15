@@ -7,7 +7,7 @@ export async function runMigrations(db: NodePgDatabase<any>): Promise<void> {
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS masters (
-      id uuid PRIMARY KEY,
+      id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
       name text NOT NULL,
       nickname text NOT NULL,
       telegram text,
@@ -18,8 +18,13 @@ export async function runMigrations(db: NodePgDatabase<any>): Promise<void> {
   `);
 
   await db.execute(sql`
+    ALTER TABLE masters
+      ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+  `);
+
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS services (
-      id uuid PRIMARY KEY,
+      id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
       name text NOT NULL,
       duration integer NOT NULL,
       price integer NOT NULL,
@@ -28,8 +33,13 @@ export async function runMigrations(db: NodePgDatabase<any>): Promise<void> {
   `);
 
   await db.execute(sql`
+    ALTER TABLE services
+      ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+  `);
+
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS bot_messages (
-      id uuid PRIMARY KEY,
+      id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
       key text NOT NULL UNIQUE,
       label text NOT NULL,
       value text NOT NULL,
@@ -38,8 +48,13 @@ export async function runMigrations(db: NodePgDatabase<any>): Promise<void> {
   `);
 
   await db.execute(sql`
+    ALTER TABLE bot_messages
+      ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+  `);
+
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS portfolio_items (
-      id uuid PRIMARY KEY,
+      id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
       url text NOT NULL,
       title text NOT NULL,
       master_id uuid REFERENCES masters(id) ON DELETE SET NULL,
@@ -48,6 +63,11 @@ export async function runMigrations(db: NodePgDatabase<any>): Promise<void> {
       media_type text NOT NULL DEFAULT 'image' CHECK (media_type IN ('image','video')),
       created_at timestamptz NOT NULL DEFAULT now()
     );
+  `);
+
+  await db.execute(sql`
+    ALTER TABLE portfolio_items
+      ALTER COLUMN id SET DEFAULT uuid_generate_v4();
   `);
 
   await db.execute(sql`
@@ -122,7 +142,7 @@ export async function runMigrations(db: NodePgDatabase<any>): Promise<void> {
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS bookings (
-      id uuid PRIMARY KEY,
+      id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
       client_name text NOT NULL,
       client_phone text NOT NULL,
       client_telegram text,
@@ -135,6 +155,11 @@ export async function runMigrations(db: NodePgDatabase<any>): Promise<void> {
       notes text,
       created_at timestamptz NOT NULL DEFAULT now()
     );
+  `);
+
+  await db.execute(sql`
+    ALTER TABLE bookings
+      ALTER COLUMN id SET DEFAULT uuid_generate_v4();
   `);
 
   await db.execute(sql`ALTER TABLE masters ADD COLUMN IF NOT EXISTS telegram text;`);

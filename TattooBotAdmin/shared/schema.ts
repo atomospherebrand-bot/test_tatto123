@@ -22,7 +22,7 @@ export const users = pgTable("users", {
 
 /** MASTERS */
 export const mastersTable = pgTable("masters", {
-  id: uuid("id").primaryKey(),
+  id: uuid("id").default(sql`uuid_generate_v4()`).primaryKey(),
   name: text("name").notNull(),
   nickname: text("nickname").notNull(),
   telegram: text("telegram"),
@@ -33,7 +33,7 @@ export const mastersTable = pgTable("masters", {
 
 /** SERVICES */
 export const servicesTable = pgTable("services", {
-  id: uuid("id").primaryKey(),
+  id: uuid("id").default(sql`uuid_generate_v4()`).primaryKey(),
   name: text("name").notNull(),
   duration: integer("duration").notNull(),
   price: integer("price").notNull(),
@@ -42,7 +42,7 @@ export const servicesTable = pgTable("services", {
 
 /** BOOKINGS */
 export const bookingsTable = pgTable("bookings", {
-  id: uuid("id").primaryKey(),
+  id: uuid("id").default(sql`uuid_generate_v4()`).primaryKey(),
   clientName: text("client_name").notNull(),
   clientPhone: text("client_phone").notNull(),
   clientTelegram: text("client_telegram"),
@@ -58,7 +58,7 @@ export const bookingsTable = pgTable("bookings", {
 
 /** BOT MESSAGES */
 export const botMessagesTable = pgTable("bot_messages", {
-  id: uuid("id").primaryKey(),
+  id: uuid("id").default(sql`uuid_generate_v4()`).primaryKey(),
   key: text("key").notNull().unique(),
   label: text("label").notNull(),
   value: text("value").notNull(),
@@ -67,7 +67,7 @@ export const botMessagesTable = pgTable("bot_messages", {
 
 /** PORTFOLIO (images + videos) */
 export const portfolioTable = pgTable("portfolio_items", {
-  id: uuid("id").primaryKey(),
+  id: uuid("id").default(sql`uuid_generate_v4()`).primaryKey(),
   url: text("url").notNull(),
   title: text("title").notNull(),
   masterId: uuid("master_id").references(() => mastersTable.id, { onDelete: "set null" }),
