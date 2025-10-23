@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { and, asc, desc, eq, ilike, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, sql, type SQL } from "drizzle-orm";
 import { db } from "../db";
 import { portfolioTable, mastersTable } from "@shared/schema";
 import { z } from "zod";
@@ -33,17 +33,26 @@ const createSchema = z.object({
 router.get("/", async (req, res, next) => {
   try {
     const { masterId, style, q, page, pageSize } = listSchema.parse(req.query);
+    const filters: SQL[] = [];
+
+    if (masterId) {
+      filters.push(eq(portfolioTable.masterId, masterId));
+    }
+
     const normalizedStyle = style?.trim();
+    if (normalizedStyle) {
+      filters.push(ilike(portfolioTable.style, `%${normalizedStyle}%`));
+    }
+
     const normalizedQuery = q?.trim();
+    if (normalizedQuery) {
+      filters.push(ilike(portfolioTable.title, `%${normalizedQuery}%`));
+    }
 
-    const where = and(
-      masterId ? eq(portfolioTable.masterId, masterId) : undefined,
-      normalizedStyle ? ilike(portfolioTable.style, `%${normalizedStyle}%`) : undefined,
-      normalizedQuery ? ilike(portfolioTable.title, `%${normalizedQuery}%`) : undefined,
-    );
+    const where = filters.length ? and(...filters) : undefined;
 
-    const countQuery = db.select({ count: sql<number>`count(*)` }).from(portfolioTable);
-    const dataQuery = db
+    const baseCount = db.select({ count: sql<number>`count(*)` }).from(portfolioTable);
+    const baseData = db
       .select({
         id: portfolioTable.id,
         url: portfolioTable.url,
@@ -62,11 +71,8 @@ router.get("/", async (req, res, next) => {
       .limit(pageSize)
       .offset((page - 1) * pageSize);
 
-    const finalCountQuery = where ? countQuery.where(where) : countQuery;
-    const finalDataQuery = where ? dataQuery.where(where) : dataQuery;
-
-    const [{ count }] = await finalCountQuery;
-    const items = await finalDataQuery;
+    const [{ count }] = where ? await baseCount.where(where) : await baseCount;
+    const items = where ? await baseData.where(where) : await baseData;
 
     const portfolio = items.map((item) => ({
       id: item.id,
@@ -80,7 +86,12 @@ router.get("/", async (req, res, next) => {
       masterName: item.masterName || item.masterFullName,
     }));
 
-    res.json({ portfolio, total: Number(count) });
+    res.json({
+      portfolio,
+      total: Number(count),
+      page,
+      pageSize,
+    });
   } catch (err) {
     next(err);
   }

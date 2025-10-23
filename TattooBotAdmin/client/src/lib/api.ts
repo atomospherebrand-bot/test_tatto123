@@ -293,7 +293,12 @@ export const api = {
 
   async getPortfolio(
     params: { masterId?: string; style?: string; q?: string; page?: number; pageSize?: number } = {},
-  ): Promise<{ portfolio: (PortfolioItem & { masterName?: string | null; thumbnail?: string | null })[]; total: number }> {
+  ): Promise<{
+    portfolio: (PortfolioItem & { masterName?: string | null; thumbnail?: string | null })[];
+    total: number;
+    page: number;
+    pageSize: number;
+  }> {
     const query = new URLSearchParams(
       Object.fromEntries(
         Object.entries(params).filter(([_, v]) => {
@@ -307,9 +312,12 @@ export const api = {
     const queryString = query.toString();
     const path = queryString.length > 0 ? `/portfolio?${queryString}` : "/portfolio";
 
-    return request<{ portfolio: (PortfolioItem & { masterName?: string | null; thumbnail?: string | null })[]; total: number }>(
-      path,
-    );
+    return request<{
+      portfolio: (PortfolioItem & { masterName?: string | null; thumbnail?: string | null })[];
+      total: number;
+      page: number;
+      pageSize: number;
+    }>(path);
   },
 
   async addPortfolioItem(payload: {

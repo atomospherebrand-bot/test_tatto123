@@ -49,8 +49,9 @@ export default function Portfolio() {
 
   const pageCount = React.useMemo(() => {
     const total = data?.total ?? 0;
-    return total > 0 ? Math.ceil(total / PAGE_SIZE) : 1;
-  }, [data?.total]);
+    const size = data?.pageSize ?? PAGE_SIZE;
+    return total > 0 ? Math.ceil(total / size) : 1;
+  }, [data?.total, data?.pageSize]);
 
   const paginationRange = React.useMemo(() => {
     const total = pageCount;
@@ -67,6 +68,12 @@ export default function Portfolio() {
   React.useEffect(() => {
     setPage(1);
   }, [filters.masterId, filters.style, filters.q]);
+
+  React.useEffect(() => {
+    if (data?.page && data.page !== page) {
+      setPage(data.page);
+    }
+  }, [data?.page, page]);
 
   return (
     <div className="space-y-6 p-6">
@@ -102,7 +109,7 @@ export default function Portfolio() {
             <span>
               Показано {data?.portfolio.length ?? 0} из {data?.total ?? 0}
             </span>
-            {data?.total ? <span>Страница {page} из {pageCount}</span> : null}
+            {data?.total ? <span>Страница {data?.page ?? page} из {pageCount}</span> : null}
           </div>
 
           <PortfolioGallery
@@ -123,7 +130,7 @@ export default function Portfolio() {
                       event.preventDefault();
                       setPage((current) => Math.max(1, current - 1));
                     }}
-                    className={page <= 1 ? "pointer-events-none opacity-50" : undefined}
+                    className={(data?.page ?? page) <= 1 ? "pointer-events-none opacity-50" : undefined}
                   />
                 </PaginationItem>
 
@@ -149,7 +156,7 @@ export default function Portfolio() {
                       event.preventDefault();
                       setPage((current) => Math.min(pageCount, current + 1));
                     }}
-                    className={page >= pageCount ? "pointer-events-none opacity-50" : undefined}
+                    className={(data?.page ?? page) >= pageCount ? "pointer-events-none opacity-50" : undefined}
                   />
                 </PaginationItem>
               </PaginationContent>
