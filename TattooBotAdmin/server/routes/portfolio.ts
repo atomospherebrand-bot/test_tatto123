@@ -33,18 +33,17 @@ const createSchema = z.object({
 router.get("/", async (req, res, next) => {
   try {
     const { masterId, style, q, page, pageSize } = listSchema.parse(req.query);
+    const normalizedStyle = style?.trim();
+    const normalizedQuery = q?.trim();
+
     const where = and(
       masterId ? eq(portfolioTable.masterId, masterId) : undefined,
-      style ? ilike(portfolioTable.style, `%${style}%`) : undefined,
-      q ? ilike(portfolioTable.title, `%${q}%`) : undefined,
+      normalizedStyle ? ilike(portfolioTable.style, `%${normalizedStyle}%`) : undefined,
+      normalizedQuery ? ilike(portfolioTable.title, `%${normalizedQuery}%`) : undefined,
     );
 
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(portfolioTable)
-      .where(where);
-
-    const items = await db
+    const countQuery = db.select({ count: sql<number>`count(*)` }).from(portfolioTable);
+    const dataQuery = db
       .select({
         id: portfolioTable.id,
         url: portfolioTable.url,
@@ -59,10 +58,15 @@ router.get("/", async (req, res, next) => {
       })
       .from(portfolioTable)
       .leftJoin(mastersTable, eq(mastersTable.id, portfolioTable.masterId))
-      .where(where)
       .orderBy(desc(portfolioTable.createdAt))
       .limit(pageSize)
       .offset((page - 1) * pageSize);
+
+    const finalCountQuery = where ? countQuery.where(where) : countQuery;
+    const finalDataQuery = where ? dataQuery.where(where) : dataQuery;
+
+    const [{ count }] = await finalCountQuery;
+    const items = await finalDataQuery;
 
     const portfolio = items.map((item) => ({
       id: item.id,

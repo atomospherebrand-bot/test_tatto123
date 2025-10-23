@@ -26,7 +26,20 @@ export default function Portfolio() {
   const [page, setPage] = React.useState(1);
   const [open, setOpen] = React.useState(false);
 
-  const queryKey = React.useMemo(() => ["portfolio", "list", { ...filters, page, pageSize: PAGE_SIZE }], [filters, page]);
+  const queryKey = React.useMemo(
+    () => [
+      "portfolio",
+      "list",
+      {
+        masterId: filters.masterId ?? null,
+        style: filters.style ?? null,
+        q: filters.q ?? null,
+        page,
+        pageSize: PAGE_SIZE,
+      },
+    ],
+    [filters.masterId, filters.style, filters.q, page],
+  );
 
   const { data, isLoading, isError, error, isFetching } = useQuery({
     queryKey,
@@ -48,7 +61,7 @@ export default function Portfolio() {
   }, [page, pageCount]);
 
   const refresh = () => {
-    qc.invalidateQueries({ queryKey });
+    qc.invalidateQueries({ queryKey: ["portfolio", "list"] });
   };
 
   React.useEffect(() => {

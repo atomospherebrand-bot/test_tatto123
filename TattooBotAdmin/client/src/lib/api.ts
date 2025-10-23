@@ -296,11 +296,19 @@ export const api = {
   ): Promise<{ portfolio: (PortfolioItem & { masterName?: string | null; thumbnail?: string | null })[]; total: number }> {
     const query = new URLSearchParams(
       Object.fromEntries(
-        Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && String(v).length > 0),
+        Object.entries(params).filter(([_, v]) => {
+          if (v === undefined || v === null) return false;
+          const value = typeof v === "string" ? v.trim() : String(v);
+          return value.length > 0;
+        }),
       ),
     );
+
+    const queryString = query.toString();
+    const path = queryString.length > 0 ? `/portfolio?${queryString}` : "/portfolio";
+
     return request<{ portfolio: (PortfolioItem & { masterName?: string | null; thumbnail?: string | null })[]; total: number }>(
-      `/portfolio?${query.toString()}`,
+      path,
     );
   },
 
