@@ -31,7 +31,6 @@ async function request<T>(input: string, init?: RequestInit): Promise<T> {
       "Content-Type": "application/json",
       "Cache-Control": "no-store",
       Pragma: "no-cache",
-      "If-Modified-Since": "0",
       ...(init?.headers ?? {}),
     },
     credentials: "same-origin",
