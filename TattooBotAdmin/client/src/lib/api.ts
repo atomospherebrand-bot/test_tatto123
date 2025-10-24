@@ -18,7 +18,15 @@ import {
 const BASE_URL = "/api";
 
 async function request<T>(input: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${BASE_URL}${input}`, {
+  const method = init?.method ? init.method.toUpperCase() : "GET";
+  let url = `${BASE_URL}${input}`;
+
+  if (method === "GET") {
+    const separator = url.includes("?") ? "&" : "?";
+    url += `${separator}_=${Date.now()}`;
+  }
+
+  const response = await fetch(url, {
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "no-store",
