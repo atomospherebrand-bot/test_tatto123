@@ -24,6 +24,7 @@ async function request<T>(input: string, init?: RequestInit): Promise<T> {
       ...(init?.headers ?? {}),
     },
     credentials: "same-origin",
+    cache: "no-store",
     ...init,
   });
 
@@ -75,7 +76,11 @@ export const api = {
       formData.append("thumbnail", options.thumbnail);
     }
 
-    const response = await fetch(`${BASE_URL}/upload`, { method: "POST", body: formData });
+    const response = await fetch(`${BASE_URL}/upload`, {
+      method: "POST",
+      body: formData,
+      cache: "no-store",
+    });
     if (!response.ok) {
       const text = await response.text();
       throw new Error(text || "Ошибка загрузки файла");

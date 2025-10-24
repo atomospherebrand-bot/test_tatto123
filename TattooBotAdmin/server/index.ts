@@ -12,6 +12,19 @@ import { getStorage } from "./storage";
 
 const app = express();
 
+// Disable automatic ETag generation so API responses are never served with 304
+// status codes that break fetch callers expecting JSON bodies.
+app.set("etag", false);
+
+// Prevent browsers from caching API responses; this keeps admin data in sync and
+// avoids conditional requests that could trigger 304 responses.
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api")) {
+    res.set("Cache-Control", "no-store");
+  }
+  next();
+});
+
 const UPLOAD_DIR = process.env.UPLOAD_DIR || path.resolve(process.cwd(), "uploads");
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
