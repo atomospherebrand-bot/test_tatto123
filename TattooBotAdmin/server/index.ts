@@ -15,12 +15,21 @@ const app = express();
 // Disable automatic ETag generation so API responses are never served with 304
 // status codes that break fetch callers expecting JSON bodies.
 app.set("etag", false);
+app.disable("x-powered-by");
 
-// Prevent browsers from caching API responses; this keeps admin data in sync and
-// avoids conditional requests that could trigger 304 responses.
+// Prevent browsers and intermediary caches from keeping API responses. We also
+// strip conditional request headers so Express never downgrades the status code
+// to 304, which would otherwise leave fetch callers without a JSON body.
 app.use((req, res, next) => {
   if (req.path.startsWith("/api")) {
-    res.set("Cache-Control", "no-store");
+    const headers = req.headers as Record<string, unknown>;
+    Reflect.deleteProperty(headers, "if-none-match");
+    Reflect.deleteProperty(headers, "if-modified-since");
+
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.setHeader("Surrogate-Control", "no-store");
   }
   next();
 });
@@ -40,7 +49,21 @@ app.use((req, res, next) => {
   const p = req.path;
   let captured: any;
   const origJson = res.json.bind(res);
-  (res as any).json = (body: any, ...args: any[]) => { captured = body; return origJson(body, ...args); };
+  (res as any).json = (body: any, ...args: any[]) => {
+    if (p.startsWith("/api")) {
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+      res.setHeader("Surrogate-Control", "no-store");
+      res.removeHeader("Last-Modified");
+      res.removeHeader("ETag");
+      if (res.statusCode === 304) {
+        res.status(200);
+      }
+    }
+    captured = body;
+    return origJson(body, ...args);
+  };
   res.on("finish", () => {
     if (!p.startsWith("/api")) return;
     let line = `${req.method} ${p} ${res.statusCode} in ${Date.now() - started}ms`;

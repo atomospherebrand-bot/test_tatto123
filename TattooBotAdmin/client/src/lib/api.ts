@@ -21,6 +21,9 @@ async function request<T>(input: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${BASE_URL}${input}`, {
     headers: {
       "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+      Pragma: "no-cache",
+      "If-Modified-Since": "0",
       ...(init?.headers ?? {}),
     },
     credentials: "same-origin",
@@ -80,6 +83,10 @@ export const api = {
       method: "POST",
       body: formData,
       cache: "no-store",
+      headers: {
+        "Cache-Control": "no-store",
+        Pragma: "no-cache",
+      },
     });
     if (!response.ok) {
       const text = await response.text();
